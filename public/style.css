@@ -1,0 +1,160 @@
+/* Reset some default styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #1c1c1c;
+  color: #f5f5f5;
+  line-height: 1.6;
+}
+
+/* Navigation */
+nav {
+  background-color: #111;
+  padding: 15px 20px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+nav a {
+  color: #f5f5f5;
+  text-decoration: none;
+  margin: 0 10px;
+  font-weight: bold;
+}
+
+nav a:hover {
+  color: #ff3d00;
+}
+
+/* Headers */
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+header h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+header p {
+  font-size: 1.2rem;
+  color: #bbb;
+}
+
+/* Sections */
+section {
+  width: 90%;
+  max-width: 1000px;
+  margin: 0 auto 40px;
+}
+
+/* Lists */
+ul {
+  list-style-type: disc;
+  margin-left: 20px;
+}
+
+ul li {
+  margin-bottom: 10px;
+}
+
+/* Buttons */
+.details-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #ff3d00;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: 0.3s;
+}
+
+.details-btn:hover {
+  background-color: #e63600;
+}
+
+/* Movies Page Styles */
+.movie-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.movie-card {
+  background-color: #2c2c2c;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.movie-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.movie-card img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.movie-card h3 {
+  margin: 10px 0 5px;
+}
+
+.movie-card p {
+  color: #bbb;
+}
+
+/* Single Movie Page */
+.movie-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.movie-header h1 {
+  font-size: 2.5rem;
+}
+
+.movie-header p {
+  color: #bbb;
+}
+
+.movie-details {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+}
+
+.movie-info {
+  max-width: 500px;
+}
+
+.movie-info p {
+  margin-bottom: 15px;
+}
+
+.movie-image img {
+  max-width: 300px;
+  border-radius: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .movie-details {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .movie-image img {
+    max-width: 80%;
+  }
+}
