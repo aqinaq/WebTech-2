@@ -36,11 +36,7 @@ app.get('/profile', (req, res) => {
 app.get('/message', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'message.html'));
 });
-app.post('/contact', (req, res) => {
-  console.log('POST /contact HIT');
-  res.redirect('/message');
-});
-/*
+
 app.post('/contact', (req, res) => {
   console.log(req.body);
 
@@ -61,7 +57,7 @@ app.post('/contact', (req, res) => {
   fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2));
 
   res.redirect('/message');
-});*/
+});
 
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public/404.html'));
