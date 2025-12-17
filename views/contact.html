@@ -33,20 +33,19 @@
 </section>
 
 <script>
-  // Basic client-side validation
+
   const form = document.getElementById('contactForm');
   form.addEventListener('submit', function(e) {
     if (!form.name.value || !form.email.value || !form.message.value) {
       e.preventDefault();
-      alert('Please fill in all fields.');
+      alert('Please fill in all fields');
     }
   });
 </script>
 
 </body>
-<footer>
+
 <nav>
       <a href="/about">About</a> | <a href="/contact">Contacts</a>
 </nav>
-</footer>
 </html>
