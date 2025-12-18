@@ -1,28 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>CineShelf</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #ffffff;
+    }
+
+    nav {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 15px 30px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    nav a {
+      color: #ffffff;
+      margin: 0 12px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+        url("https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1600&q=80");
+      background-size: cover;
+      background-position: center;
+    }
+
+    header h1 {
+      font-size: 4rem;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    header p {
+      font-size: 1.3rem;
+      max-width: 600px;
+      margin: 0 auto 30px;
+      opacity: 0.9;
+    }
+
+    .hero-btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background: #ff9800;
+      color: #000;
+      border-radius: 30px;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+
+    section {
+      padding: 70px 40px;
+      background: #111;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .card {
+      background: #1c1c1c;
+      padding: 30px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .card img {
+      width: 60px;
+      margin-bottom: 20px;
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #000;
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 <body>
 
   <nav>
-      <a href="/">Home</a> | <a href="/movies">Movies</a> |
-      <a href="/profile">Profile</a> | <a href="/favorites">Favorites</a>
- </nav>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/movies">Movies</a>
+    <a href="/favorites">Favorites</a>
+    <a href="/profile">Profile</a>
+    <a href="/contact">Contact</a>
+  </nav>
 
   <header>
-    <h1>CineShelf</h1>
-    <p>Browse, organize, and explore your favorite films</p>
+    <div>
+      <h1>CineShelf</h1>
+      <p>Discover, organize, and fall in love with cinema again. Your personal movie library — beautifully designed.</p>
+      <a href="/movies" class="hero-btn">Explore Movies</a>
+    </div>
   </header>
 
-
-  <section style="text-align:center; margin-top:30px;">
-    <a href="/movies" class="details-btn">Go to Movies</a>
+  <section>
+    <div class="features">
+      <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/3176/3176363.png" alt="Browse">
+        <h3>Browse Movies</h3>
+        <p>Explore a growing collection of movies with detailed descriptions and ratings.</p>
+      </div>
+      <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/833/833472.png" alt="Favorites">
+        <h3>Save Favorites</h3>
+        <p>Create your own favorites list and keep track of films you love.</p>
+      </div>
+      <div class="card">
+        <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="Profile">
+        <h3>Personal Profile</h3>
+        <p>Manage your profile, preferences, and personal movie experience.</p>
+      </div>
+    </div>
   </section>
-  <nav>
-    <a href="/about">About</a> | <a href="/contact">Contacts</a>
-  </nav>
+
+  <footer>
+    © 2025 CineShelf • Your Digital Movie Shelf
+  </footer>
 
 </body>
 </html>
