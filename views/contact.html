@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Contact | CineShelf</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav>
+  <a href="/">Home</a> | <a href="/movies">Movies</a> |
+  <a href="/favorites">Favorites</a> | <a href="/profile">Profile</a> 
+
+</nav>
+
+<header>
+  <h1>Contact Us</h1>
+  <p>We'd love to hear from you</p>
+</header>
+
+<section>
+  <form action="/contact" method="POST" id="contactForm" style="max-width:500px; margin:0 auto;">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name" required style="width:100%; padding:8px; margin-bottom:15px;"><br>
+
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" name="email" required style="width:100%; padding:8px; margin-bottom:15px;"><br>
+
+    <label for="message">Message:</label><br>
+    <textarea id="message" name="message" rows="5" required style="width:100%; padding:8px; margin-bottom:15px;"></textarea><br>
+
+    <button type="submit" class="details-btn">Send Message</button>
+  </form>
+</section>
+
+<script>
+
+  const form = document.getElementById('contactForm');
+  form.addEventListener('submit', function(e) {
+    if (!form.name.value || !form.email.value || !form.message.value) {
+      e.preventDefault();
+      alert('Please fill in all fields');
+    }
+  });
+</script>
+
+</body>
+
+<nav>
+      <a href="/about">About</a> | <a href="/contact">Contacts</a>
+</nav>
+</html>
