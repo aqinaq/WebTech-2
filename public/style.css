@@ -1,3 +1,4 @@
+/* --- Базовые настройки --- */
 * {
   margin: 0;
   padding: 0;
@@ -11,141 +12,134 @@ body {
   line-height: 1.6;
 }
 
+/* --- Навигация --- */
 nav {
-  background-color: #111;
-  padding: 15px 20px;
+  background: rgba(17, 17, 17, 0.95);
+  padding: 20px;
   text-align: center;
-  margin-bottom: 30px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid #333;
 }
 
 nav a {
   color: #f5f5f5;
   text-decoration: none;
-  margin: 0 10px;
-  font-weight: bold;
+  margin: 0 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  transition: 0.3s;
 }
 
 nav a:hover {
   color: #ff3d00;
 }
 
+/* --- Заголовки страниц --- */
 header {
+  padding: 60px 20px;
   text-align: center;
-  margin-bottom: 30px;
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2059&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 40px;
 }
 
 header h1 {
-  font-size: 3rem;
+  font-size: 3.5rem;
   margin-bottom: 10px;
+  color: #fff;
 }
 
-header p {
-  font-size: 1.2rem;
+/* --- Контейнеры для контента (About, Profile) --- */
+section {
+  width: 90%;
+  max-width: 800px; /* Сузили для лучшей читаемости текста */
+  margin: 0 auto 60px;
+  padding: 20px;
+}
+
+/* --- Стили для форм (Contact) --- */
+form {
+  background: #2c2c2c;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
   color: #bbb;
 }
 
-section {
-  width: 90%;
-  max-width: 1000px;
-  margin: 0 auto 40px;
+input[type="text"],
+input[type="email"],
+textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #1c1c1c;
+  color: #fff;
+  font-size: 1rem;
 }
 
-ul {
-  list-style-type: disc;
-  margin-left: 20px;
+input:focus, textarea:focus {
+  outline: none;
+  border-color: #ff3d00;
 }
 
-ul li {
-  margin-bottom: 10px;
-}
-
-.details-btn {
+/* --- Кнопки --- */
+.details-btn, button[type="submit"] {
   display: inline-block;
-  padding: 10px 20px;
+  padding: 12px 30px;
   background-color: #ff3d00;
   color: #fff;
   text-decoration: none;
-  border-radius: 5px;
+  border-radius: 30px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
   transition: 0.3s;
+  text-transform: uppercase;
 }
 
-.details-btn:hover {
+.details-btn:hover, button[type="submit"]:hover {
   background-color: #e63600;
+  transform: translateY(-2px);
 }
 
+/* --- Список фильмов --- */
 .movie-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
 }
 
 .movie-card {
   background-color: #2c2c2c;
-  padding: 15px;
-  border-radius: 10px;
+  padding: 20px;
+  border-radius: 15px;
   text-align: center;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.movie-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  transition: 0.4s;
 }
 
 .movie-card img {
   width: 100%;
+  height: 350px;
+  object-fit: cover;
   border-radius: 10px;
-  margin-bottom: 10px;
 }
 
-.movie-card h3 {
-  margin: 10px 0 5px;
-}
-
-.movie-card p {
-  color: #bbb;
-}
-
-.movie-header {
+footer {
   text-align: center;
-  margin-bottom: 30px;
-}
-
-.movie-header h1 {
-  font-size: 2.5rem;
-}
-
-.movie-header p {
-  color: #bbb;
-}
-
-.movie-details {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 30px;
-}
-
-.movie-info {
-  max-width: 500px;
-}
-
-.movie-info p {
-  margin-bottom: 15px;
-}
-
-.movie-image img {
-  max-width: 300px;
-  border-radius: 10px;
-}
-
-@media (max-width: 768px) {
-  .movie-details {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .movie-image img {
-    max-width: 80%;
-  }
+  padding: 40px;
+  color: #666;
+  border-top: 1px solid #333;
 }
