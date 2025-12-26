@@ -1,51 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Contact | CineShelf</title>
-  <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8">
+  <title>Contact Us</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
-<nav>
-  <a href="/">Home</a> | <a href="/movies">Movies</a> |
-  <a href="/favorites">Favorites</a> | <a href="/profile">Profile</a> 
+  <header>
+    <h1>Contact Us</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/movies">Movies</a>
+      <a href="/favorites">Favorites</a>
+      <a href="/profile">Profile</a>
+      <a href="/contact">Contact</a>
+    </nav>
+  </header>
 
-</nav>
+  <main>
+    <h2>Send us a message</h2>
 
-<header>
-  <h1>Contact Us</h1>
-  <p>We'd love to hear from you</p>
-</header>
+    <!-- IMPORTANT: novalidate disables browser validation -->
+    <form action="/contact" method="POST" novalidate>
 
-<section>
-  <form action="/contact" method="POST" id="contactForm" style="max-width:500px; margin:0 auto;">
-    <label for="name">Name:</label><br>
-    <input type="text" id="name" name="name" required style="width:100%; padding:8px; margin-bottom:15px;"><br>
+      <div>
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name">
+      </div>
 
-    <label for="email">Email:</label><br>
-    <input type="email" id="email" name="email" required style="width:100%; padding:8px; margin-bottom:15px;"><br>
+      <br>
 
-    <label for="message">Message:</label><br>
-    <textarea id="message" name="message" rows="5" required style="width:100%; padding:8px; margin-bottom:15px;"></textarea><br>
+      <div>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email">
+      </div>
 
-    <button type="submit" class="details-btn">Send Message</button>
-  </form>
-</section>
+      <br>
 
-<script>
+      <div>
+        <label for="message">Message:</label><br>
+        <textarea id="message" name="message" rows="5"></textarea>
+      </div>
 
-  const form = document.getElementById('contactForm');
-  form.addEventListener('submit', function(e) {
-    if (!form.name.value || !form.email.value || !form.message.value) {
-      e.preventDefault();
-      alert('Please fill in all fields');
-    }
-  });
-</script>
+      <br>
+
+      <button type="submit">Send</button>
+
+    </form>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 CineShelf</p>
+  </footer>
 
 </body>
-
-<nav>
-      <a href="/about">About</a> | <a href="/contact">Contacts</a>
-</nav>
 </html>
