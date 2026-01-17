@@ -1,46 +1,43 @@
-# Project Name: CineShelf
+# CineShelf – MongoDB Backend API
 
 ## Description
-CineShelf is a demo movie library project built with Node.js and Express.js.
-The goal is to demonstrate server-side routing, middleware, parameters handling,
-and form processing without using a real database.
+CineShelf is a movie library backend built with Node.js, Express, and MongoDB (native driver).
 
 ## Technologies
 - Node.js
 - Express.js
-- HTML / CSS
+- MongoDB (native driver)
 
-## Project Structure
-- server.js – Express server and routes
-- views/ – HTML pages
-- public/ – CSS and static files
-- messages.json – Saved contact form data
+## Database
+Database: cineshelf_db  
+Collection: movies (auto-created on first insert)
 
-## Routes
+Fields:
+- title (string)
+- genre (string)
+- year (number)
+- description (string)
 
-| Method | Route | Description |
-|------|-------|-------------|
-| GET | / | Home page |
-| GET | /about | Project and team info |
-| GET | /movies | Movie list |
-| GET | /item/:id | Dynamic item page (placeholder) |
-| GET | /search?q= | Search using query parameter |
-| GET | /favorites | Favorites page |
-| GET | /profile | User profile |
-| POST | /contact | Saves contact form data |
-| GET | /api/info | Project info in JSON |
-| ANY | * | 404 page |
+## API Endpoints
 
-## Middleware
-- express.urlencoded()
-- Custom logger (HTTP method + URL)
+GET /api/movies  
+GET /api/movies/:id  
+POST /api/movies  
+PUT /api/movies/:id  
+DELETE /api/movies/:id  
 
-## Validation
-Server-side validation is implemented for:
-- Missing query parameters
-- Empty contact form fields
+Supports:
+- Filtering: ?genre=Sci-Fi&year=2010
+- Sorting: ?sortBy=year or ?sortBy=-year
+- Projection: ?fields=title,year
 
-## Team Members (SE-2426)
-- Danelya Bekzhan
-- Oryngul Maratova
-- Aigerim Kazbek
+## Status Codes
+200 OK  
+201 Created  
+400 Bad Request  
+404 Not Found  
+500 Server Error  
+
+## Run
+npm install  
+node app.js
