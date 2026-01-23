@@ -1,9 +1,13 @@
 const express = require("express");
 const path = require("path");
-const connectDB = require("./database/mongo"); // Импортируем функцию подключения
+
+// IMPORTANT: load .env locally (Render will ignore it, uses dashboard env vars)
+require("dotenv").config();
+
+const connectDB = require("./database/mongo");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
@@ -11,14 +15,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // Logger
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
+  console.log(`${req.method} ${req.url}`);
+  next();
 });
 
-// Static
+// Static files (public)
 app.use(express.static(path.join(__dirname, "public")));
 
-// HTML Routes
+// HTML Routes (views)
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "views", "index.html")));
 app.get("/about", (req, res) => res.sendFile(path.join(__dirname, "views", "about.html")));
 app.get("/contact", (req, res) => res.sendFile(path.join(__dirname, "views", "contact.html")));
@@ -33,28 +37,24 @@ console.log("Movies routes connected");
 
 // Global 404
 app.use((req, res) => {
-    if (req.url.startsWith("/api")) {
-        res.status(404).json({ error: "API route not found" });
-    } else {
-        res.status(404).sendFile(path.join(__dirname, "public", "404.html"));
-    }
+  if (req.url.startsWith("/api")) {
+    res.status(404).json({ error: "API route not found" });
+  } else {
+    res.status(404).sendFile(path.join(__dirname, "public", "404.html"));
+  }
 });
 
-// Функция для запуска базы и сервера
 async function start() {
-    try {
-        // Сначала подключаемся к базе данных
-        await connectDB(); 
-        
-        // Только после успеха запускаем сервер
-        app.listen(PORT, () => {
-            console.log(`Server running at http://localhost:${PORT}`);
-        });
-    } catch (err) {
-        console.error("❌ Failed to start server due to MongoDB error:", err);
-        process.exit(1); // Завершаем процесс, если база не доступна
-    }
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server due to MongoDB error:", err);
+    process.exit(1);
+  }
 }
 
-// Запускаем приложение
 start();
