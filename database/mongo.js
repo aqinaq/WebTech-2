@@ -1,21 +1,20 @@
 const { MongoClient } = require("mongodb");
 
-const uri = process.env.MONGO_URI;
-
-if (!uri) {
-  throw new Error("MONGO_URI is not defined. Add it to .env (local) or hosting env vars (production).");
-}
-
-const client = new MongoClient(uri);
-
+let client;
 let db;
 
 async function connectDB() {
-  if (!db) {
-    await client.connect();
-    db = client.db("cineshelf_db");
-    console.log("Connected to MongoDB");
+  if (!process.env.MONGO_URI) {
+    throw new Error("MONGO_URI is not defined");
   }
+
+  client = new MongoClient(process.env.MONGO_URI);
+  await client.connect();
+
+  // имя базы уже в URI: ...mongodb.net/cineshelf_db...
+  db = client.db(); // возьмёт DB из URI
+  console.log("Connected to MongoDB");
+
   return db;
 }
 

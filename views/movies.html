@@ -19,6 +19,19 @@
 <header>
   <h1>Movies (CRUD)</h1>
   <p>Create, update, delete movies directly from the web interface</p>
+
+  <!-- NEW: Auth bar -->
+  <div id="authBar" style="margin-top:10px;">
+    <span id="authStatus">Checking login...</span>
+    <a id="loginLink" href="/login" style="margin-left:10px; display:none;">Login</a>
+    <button id="logoutBtn" type="button" style="margin-left:10px; display:none;">Logout</button>
+  </div>
+
+  <!-- NEW: Warning for unauthorized users -->
+  <p id="authWarning" style="display:none; color:red; margin-top:10px;">
+    Please login to create/update/delete movies.
+    <a href="/login">Go to login</a>
+  </p>
 </header>
 
 <section>

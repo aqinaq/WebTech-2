@@ -1,13 +1,15 @@
 const express = require("express");
 const { ObjectId } = require("mongodb");
-const connectDB = require("../database/mongo");
+const requireAuth = require("../middleware/requireAuth"); // NEW
 
 const router = express.Router();
 
-// GET ALL with filter, sort, projection
+// --------------------
+// GET ALL (ОТКРЫТ)
+// --------------------
 router.get("/", async (req, res) => {
   try {
-    const db = await connectDB();
+    const db = req.app.locals.db; // NEW
     const collection = db.collection("movies");
 
     const { genre, year, sortBy, fields } = req.query;
@@ -44,13 +46,15 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET ONE
+// --------------------
+// GET ONE (ОТКРЫТ)
+// --------------------
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: "Invalid ID" });
 
   try {
-    const db = await connectDB();
+    const db = req.app.locals.db; // NEW
     const movie = await db.collection("movies").findOne({ _id: new ObjectId(id) });
 
     if (!movie) return res.status(404).json({ error: "Movie not found" });
@@ -61,8 +65,10 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE
-router.post("/", async (req, res) => {
+// --------------------
+// CREATE (ЗАЩИЩЕН)
+// --------------------
+router.post("/", requireAuth, async (req, res) => {
   const { title, genre, year, description } = req.body;
 
   if (!title || !genre || !year || !description) {
@@ -70,12 +76,13 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const db = await connectDB();
+    const db = req.app.locals.db; // NEW
     const result = await db.collection("movies").insertOne({
       title: String(title),
       genre: String(genre),
       year: parseInt(year),
       description: String(description),
+      createdAt: new Date(), // NEW (полезно для задания)
     });
 
     res.status(201).json({ message: "Movie created", id: result.insertedId });
@@ -85,8 +92,10 @@ router.post("/", async (req, res) => {
   }
 });
 
-// UPDATE
-router.put("/:id", async (req, res) => {
+// --------------------
+// UPDATE (ЗАЩИЩЕН)
+// --------------------
+router.put("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   const { title, genre, year, description } = req.body;
 
@@ -96,13 +105,23 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
-    const db = await connectDB();
+    const db = req.app.locals.db; // NEW
     const result = await db.collection("movies").updateOne(
       { _id: new ObjectId(id) },
-      { $set: { title: String(title), genre: String(genre), year: parseInt(year), description: String(description) } }
+      {
+        $set: {
+          title: String(title),
+          genre: String(genre),
+          year: parseInt(year),
+          description: String(description),
+          updatedAt: new Date(), // NEW
+        },
+      }
     );
 
-    if (result.matchedCount === 0) return res.status(404).json({ error: "Movie not found" });
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
 
     res.status(200).json({ message: "Movie updated" });
   } catch (err) {
@@ -111,16 +130,20 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE
-router.delete("/:id", async (req, res) => {
+// --------------------
+// DELETE (ЗАЩИЩЕН)
+// --------------------
+router.delete("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: "Invalid ID" });
 
   try {
-    const db = await connectDB();
+    const db = req.app.locals.db; // NEW
     const result = await db.collection("movies").deleteOne({ _id: new ObjectId(id) });
 
-    if (result.deletedCount === 0) return res.status(404).json({ error: "Movie not found" });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
 
     res.status(200).json({ message: "Movie deleted" });
   } catch (err) {

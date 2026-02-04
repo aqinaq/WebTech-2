@@ -1,14 +1,19 @@
 const express = require("express");
 const path = require("path");
-
 require("dotenv").config();
 
 const connectDB = require("./database/mongo");
 
+// SESSIONS
+const session = require("express-session");
+const MongoStore = require("connect-mongo").default; // ✅ правильно для твоего случая
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// --------------------
+// MIDDLEWARE
+// --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -18,34 +23,91 @@ app.use((req, res, next) => {
   next();
 });
 
-// Static files (public)
+// --------------------
+// SESSIONS (ОБЯЗАТЕЛЬНО ДО РОУТОВ)
+// --------------------
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "fallback_secret",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI, // ✅ новый параметр
+    }),
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
+  })
+);
+
+// --------------------
+// STATIC FILES
+// --------------------
 app.use(express.static(path.join(__dirname, "public")));
 
-// HTML Routes (views)
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "views", "index.html")));
-app.get("/about", (req, res) => res.sendFile(path.join(__dirname, "views", "about.html")));
-app.get("/contact", (req, res) => res.sendFile(path.join(__dirname, "views", "contact.html")));
-app.get("/movies", (req, res) => res.sendFile(path.join(__dirname, "views", "movies.html")));
-app.get("/favorites", (req, res) => res.sendFile(path.join(__dirname, "views", "favorites.html")));
-app.get("/profile", (req, res) => res.sendFile(path.join(__dirname, "views", "profile.html")));
+// --------------------
+// HTML ROUTES (VIEWS)
+// --------------------
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "index.html"))
+);
 
-// API Routes
+app.get("/about", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "about.html"))
+);
+
+app.get("/contact", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "contact.html"))
+);
+
+app.get("/movies", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "movies.html"))
+);
+
+app.get("/favorites", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "favorites.html"))
+);
+
+app.get("/profile", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "profile.html"))
+);
+
+app.get("/login", (req, res) =>
+  res.sendFile(path.join(__dirname, "views", "login.html"))
+);
+
+// --------------------
+// API ROUTES
+// --------------------
 const moviesRoutes = require("./routes/movies.routes");
 app.use("/api/movies", moviesRoutes);
 console.log("Movies routes connected");
 
-// Global 404
+const authRoutes = require("./routes/auth.routes");
+app.use("/auth", authRoutes);
+console.log("Auth routes connected");
+
+// --------------------
+// GLOBAL 404
+// --------------------
 app.use((req, res) => {
-  if (req.url.startsWith("/api")) {
+  if (req.url.startsWith("/api") || req.url.startsWith("/auth")) {
     res.status(404).json({ error: "API route not found" });
   } else {
     res.status(404).sendFile(path.join(__dirname, "public", "404.html"));
   }
 });
 
+// --------------------
+// START SERVER
+// --------------------
 async function start() {
   try {
-    await connectDB();
+    const db = await connectDB(); // важно: connectDB должен return db
+    app.locals.db = db;
 
     app.listen(PORT, () => {
       console.log(`Server running at http://localhost:${PORT}`);

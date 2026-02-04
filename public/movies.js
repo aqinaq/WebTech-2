@@ -11,23 +11,102 @@ const descInput = document.getElementById("description");
 const submitBtn = document.getElementById("submitBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 
+// NEW: auth UI elements (из movies.html)
+const authStatus = document.getElementById("authStatus");
+const loginLink = document.getElementById("loginLink");
+const logoutBtn = document.getElementById("logoutBtn");
+const authWarning = document.getElementById("authWarning");
+
+let isAuthenticated = false;
+
+// --------------------
+// Helpers
+// --------------------
+async function safeJson(res) {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function redirectToLogin() {
+  alert("Please login");
+  window.location.href = "/login";
+}
+
+function setAuthUI(auth, userEmail = "") {
+  isAuthenticated = auth;
+
+  if (authStatus) {
+    authStatus.textContent = auth ? `Logged in as ${userEmail}` : "Not logged in";
+  }
+  if (loginLink) {
+    loginLink.style.display = auth ? "none" : "inline";
+  }
+  if (logoutBtn) {
+    logoutBtn.style.display = auth ? "inline-block" : "none";
+  }
+  if (authWarning) {
+    authWarning.style.display = auth ? "none" : "block";
+  }
+
+  // Отключаем форму, если не залогинен
+  const disable = !auth;
+  if (titleInput) titleInput.disabled = disable;
+  if (genreInput) genreInput.disabled = disable;
+  if (yearInput) yearInput.disabled = disable;
+  if (descInput) descInput.disabled = disable;
+  if (submitBtn) submitBtn.disabled = disable;
+  if (cancelBtn) cancelBtn.disabled = disable;
+}
+
+async function checkAuth() {
+  const res = await fetch("/auth/me", { credentials: "include" });
+  const data = await safeJson(res);
+
+  if (data && data.authenticated) {
+    setAuthUI(true, data.user?.email || "");
+    return true;
+  }
+
+  setAuthUI(false, "");
+  return false;
+}
+
+// --------------------
+// Movies loading
+// --------------------
 async function loadMovies() {
   const res = await fetch(API_URL);
-  const movies = await res.json();
+  const movies = await safeJson(res);
 
   tableBody.innerHTML = "";
 
-  movies.forEach((m) => {
+  if (!res.ok) {
+    const msg = movies?.error || movies?.message || "Failed to load movies";
+    tableBody.innerHTML = `<tr><td colspan="5" style="padding:10px;">${escapeHtml(msg)}</td></tr>`;
+    return;
+  }
+
+  (movies || []).forEach((m) => {
     const tr = document.createElement("tr");
+
+    // Если не залогинен — скрываем кнопки Edit/Delete
+    const actionsHtml = isAuthenticated
+      ? `
+        <button class="details-btn" data-edit="${m._id}">Edit</button>
+        <button class="details-btn" data-del="${m._id}">Delete</button>
+      `
+      : `<span style="color:#888;">Login required</span>`;
 
     tr.innerHTML = `
       <td style="padding:10px 6px; border-bottom:1px solid #333;">${escapeHtml(m.title)}</td>
       <td style="padding:10px 6px; border-bottom:1px solid #333;">${escapeHtml(m.genre)}</td>
-      <td style="padding:10px 6px; border-bottom:1px solid #333;">${m.year}</td>
+      <td style="padding:10px 6px; border-bottom:1px solid #333;">${Number(m.year) || ""}</td>
       <td style="padding:10px 6px; border-bottom:1px solid #333; max-width:420px;">${escapeHtml(m.description)}</td>
       <td style="padding:10px 6px; border-bottom:1px solid #333; white-space:nowrap;">
-        <button class="details-btn" data-edit="${m._id}">Edit</button>
-        <button class="details-btn" data-del="${m._id}">Delete</button>
+        ${actionsHtml}
       </td>
     `;
 
@@ -35,6 +114,9 @@ async function loadMovies() {
   });
 }
 
+// --------------------
+// Form modes
+// --------------------
 function setFormModeCreate() {
   idInput.value = "";
   submitBtn.textContent = "Add Movie";
@@ -53,28 +135,58 @@ function setFormModeEdit(movie) {
   cancelBtn.style.display = "inline-block";
 }
 
+// --------------------
+// Table actions (Edit/Delete)
+// --------------------
 tableBody.addEventListener("click", async (e) => {
-  const editId = e.target.dataset.edit;
-  const delId = e.target.dataset.del;
+  const editId = e.target.dataset?.edit;
+  const delId = e.target.dataset?.del;
 
   if (delId) {
+    if (!isAuthenticated) return redirectToLogin();
+
     const ok = confirm("Delete this movie?");
     if (!ok) return;
 
-    await fetch(`${API_URL}/${delId}`, { method: "DELETE" });
+    const res = await fetch(`${API_URL}/${delId}`, {
+      method: "DELETE",
+      credentials: "include", // NEW
+    });
+
+    if (res.status === 401) return redirectToLogin();
+
+    if (!res.ok) {
+      const data = await safeJson(res);
+      alert(data?.error || data?.message || "Delete failed");
+      return;
+    }
+
     await loadMovies();
     setFormModeCreate();
   }
 
   if (editId) {
+    if (!isAuthenticated) return redirectToLogin();
+
     const res = await fetch(`${API_URL}/${editId}`);
-    const movie = await res.json();
+    const movie = await safeJson(res);
+
+    if (!res.ok) {
+      alert(movie?.error || movie?.message || "Failed to load movie");
+      return;
+    }
+
     setFormModeEdit(movie);
   }
 });
 
+// --------------------
+// Submit form (Create/Update)
+// --------------------
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  if (!isAuthenticated) return redirectToLogin();
 
   const payload = {
     title: titleInput.value.trim(),
@@ -85,20 +197,31 @@ form.addEventListener("submit", async (e) => {
 
   const id = idInput.value;
 
+  let res;
   if (!id) {
     // CREATE
-    await fetch(API_URL, {
+    res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      credentials: "include", // NEW
     });
   } else {
     // UPDATE
-    await fetch(`${API_URL}/${id}`, {
+    res = await fetch(`${API_URL}/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      credentials: "include", // NEW
     });
+  }
+
+  if (res.status === 401) return redirectToLogin();
+
+  if (!res.ok) {
+    const data = await safeJson(res);
+    alert(data?.error || data?.message || "Save failed");
+    return;
   }
 
   await loadMovies();
@@ -109,8 +232,32 @@ cancelBtn.addEventListener("click", () => {
   setFormModeCreate();
 });
 
+// --------------------
+// Logout button
+// --------------------
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    const res = await fetch("/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      alert("Logout failed");
+      return;
+    }
+
+    setAuthUI(false, "");
+    setFormModeCreate();
+    await loadMovies();
+  });
+}
+
+// --------------------
+// Escape HTML
+// --------------------
 function escapeHtml(str) {
-  return String(str)
+  return String(str ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -118,6 +265,11 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
+// --------------------
 // Init
-loadMovies();
-setFormModeCreate();
+// --------------------
+(async () => {
+  await checkAuth();
+  await loadMovies();
+  setFormModeCreate();
+})();
