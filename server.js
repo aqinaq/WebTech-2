@@ -1,7 +1,6 @@
 const express = require("express");
 const path = require("path");
 
-// IMPORTANT: load .env locally (Render will ignore it, uses dashboard env vars)
 require("dotenv").config();
 
 const connectDB = require("./database/mongo");
