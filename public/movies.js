@@ -7,11 +7,18 @@ const idInput = document.getElementById("movieId");
 const titleInput = document.getElementById("title");
 const genreInput = document.getElementById("genre");
 const yearInput = document.getElementById("year");
+
+// NEW fields (должны быть в movies.html)
+const directorInput = document.getElementById("director");
+const ratingInput = document.getElementById("rating");
+const durationInput = document.getElementById("durationMin");
+const countryInput = document.getElementById("country");
+
 const descInput = document.getElementById("description");
 const submitBtn = document.getElementById("submitBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 
-// NEW: auth UI elements (из movies.html)
+// Auth UI elements
 const authStatus = document.getElementById("authStatus");
 const loginLink = document.getElementById("loginLink");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -38,24 +45,21 @@ function redirectToLogin() {
 function setAuthUI(auth, userEmail = "") {
   isAuthenticated = auth;
 
-  if (authStatus) {
-    authStatus.textContent = auth ? `Logged in as ${userEmail}` : "Not logged in";
-  }
-  if (loginLink) {
-    loginLink.style.display = auth ? "none" : "inline";
-  }
-  if (logoutBtn) {
-    logoutBtn.style.display = auth ? "inline-block" : "none";
-  }
-  if (authWarning) {
-    authWarning.style.display = auth ? "none" : "block";
-  }
+  if (authStatus) authStatus.textContent = auth ? `Logged in as ${userEmail}` : "Not logged in";
+  if (loginLink) loginLink.style.display = auth ? "none" : "inline";
+  if (logoutBtn) logoutBtn.style.display = auth ? "inline-block" : "none";
+  if (authWarning) authWarning.style.display = auth ? "none" : "block";
 
-  // Отключаем форму, если не залогинен
   const disable = !auth;
   if (titleInput) titleInput.disabled = disable;
   if (genreInput) genreInput.disabled = disable;
   if (yearInput) yearInput.disabled = disable;
+
+  if (directorInput) directorInput.disabled = disable;
+  if (ratingInput) ratingInput.disabled = disable;
+  if (durationInput) durationInput.disabled = disable;
+  if (countryInput) countryInput.disabled = disable;
+
   if (descInput) descInput.disabled = disable;
   if (submitBtn) submitBtn.disabled = disable;
   if (cancelBtn) cancelBtn.disabled = disable;
@@ -85,14 +89,13 @@ async function loadMovies() {
 
   if (!res.ok) {
     const msg = movies?.error || movies?.message || "Failed to load movies";
-    tableBody.innerHTML = `<tr><td colspan="5" style="padding:10px;">${escapeHtml(msg)}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="9" style="padding:10px;">${escapeHtml(msg)}</td></tr>`;
     return;
   }
 
   (movies || []).forEach((m) => {
     const tr = document.createElement("tr");
 
-    // Если не залогинен — скрываем кнопки Edit/Delete
     const actionsHtml = isAuthenticated
       ? `
         <button class="details-btn" data-edit="${m._id}">Edit</button>
@@ -104,7 +107,14 @@ async function loadMovies() {
       <td style="padding:10px 6px; border-bottom:1px solid #333;">${escapeHtml(m.title)}</td>
       <td style="padding:10px 6px; border-bottom:1px solid #333;">${escapeHtml(m.genre)}</td>
       <td style="padding:10px 6px; border-bottom:1px solid #333;">${Number(m.year) || ""}</td>
+
+      <td style="padding:10px 6px; border-bottom:1px solid #333;">${escapeHtml(m.director)}</td>
+      <td style="padding:10px 6px; border-bottom:1px solid #333;">${m.rating ?? ""}</td>
+      <td style="padding:10px 6px; border-bottom:1px solid #333;">${m.durationMin ?? ""}</td>
+      <td style="padding:10px 6px; border-bottom:1px solid #333;">${escapeHtml(m.country)}</td>
+
       <td style="padding:10px 6px; border-bottom:1px solid #333; max-width:420px;">${escapeHtml(m.description)}</td>
+
       <td style="padding:10px 6px; border-bottom:1px solid #333; white-space:nowrap;">
         ${actionsHtml}
       </td>
@@ -126,17 +136,24 @@ function setFormModeCreate() {
 
 function setFormModeEdit(movie) {
   idInput.value = movie._id;
-  titleInput.value = movie.title;
-  genreInput.value = movie.genre;
-  yearInput.value = movie.year;
-  descInput.value = movie.description;
+
+  titleInput.value = movie.title || "";
+  genreInput.value = movie.genre || "";
+  yearInput.value = movie.year ?? "";
+
+  if (directorInput) directorInput.value = movie.director || "";
+  if (ratingInput) ratingInput.value = movie.rating ?? "";
+  if (durationInput) durationInput.value = movie.durationMin ?? "";
+  if (countryInput) countryInput.value = movie.country || "";
+
+  descInput.value = movie.description || "";
 
   submitBtn.textContent = "Update Movie";
   cancelBtn.style.display = "inline-block";
 }
 
 // --------------------
-// Table actions (Edit/Delete)
+// Table actions
 // --------------------
 tableBody.addEventListener("click", async (e) => {
   const editId = e.target.dataset?.edit;
@@ -150,7 +167,7 @@ tableBody.addEventListener("click", async (e) => {
 
     const res = await fetch(`${API_URL}/${delId}`, {
       method: "DELETE",
-      credentials: "include", // NEW
+      credentials: "include",
     });
 
     if (res.status === 401) return redirectToLogin();
@@ -181,17 +198,22 @@ tableBody.addEventListener("click", async (e) => {
 });
 
 // --------------------
-// Submit form (Create/Update)
+// Submit form
 // --------------------
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-
   if (!isAuthenticated) return redirectToLogin();
 
   const payload = {
     title: titleInput.value.trim(),
     genre: genreInput.value.trim(),
     year: Number(yearInput.value),
+
+    director: directorInput ? directorInput.value.trim() : "",
+    rating: ratingInput ? Number(ratingInput.value) : null,
+    durationMin: durationInput ? Number(durationInput.value) : null,
+    country: countryInput ? countryInput.value.trim() : "",
+
     description: descInput.value.trim(),
   };
 
@@ -199,20 +221,18 @@ form.addEventListener("submit", async (e) => {
 
   let res;
   if (!id) {
-    // CREATE
     res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      credentials: "include", // NEW
+      credentials: "include",
     });
   } else {
-    // UPDATE
     res = await fetch(`${API_URL}/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      credentials: "include", // NEW
+      credentials: "include",
     });
   }
 
@@ -233,7 +253,7 @@ cancelBtn.addEventListener("click", () => {
 });
 
 // --------------------
-// Logout button
+// Logout
 // --------------------
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
