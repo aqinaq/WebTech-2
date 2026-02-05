@@ -10,30 +10,47 @@ function getUsersCollection(req) {
   return db.collection("users");
 }
 
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function invalidCredentials(res) {
+  // всегда одно и то же сообщение (по требованиям)
+  return res.status(401).json({ message: "Invalid credentials" });
+}
+
+// --------------------
+// POST /auth/register
+// Разрешаем только создать ПЕРВОГО пользователя (админа).
+// После этого регистрироваться нельзя (для безопасности).
+// --------------------
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // validation
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
-    const normalizedEmail = String(email).trim().toLowerCase();
+
+    const normalizedEmail = normalizeEmail(email);
     if (!normalizedEmail.includes("@")) {
       return res.status(400).json({ message: "Invalid email" });
     }
-    if (String(password).length < 6) {
+
+    const pass = String(password);
+    if (pass.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
     const users = getUsersCollection(req);
 
-    const exists = await users.findOne({ email: normalizedEmail });
-    if (exists) {
-      return res.status(409).json({ message: "User already exists" });
+    // ✅ безопасность: разрешаем регистрацию только если в базе нет пользователей
+    const usersCount = await users.countDocuments({});
+    if (usersCount > 0) {
+      return res.status(403).json({ message: "Registration is disabled" });
     }
 
-    const passwordHash = await bcrypt.hash(String(password), 10);
+    const passwordHash = await bcrypt.hash(pass, 10);
 
     const result = await users.insertOne({
       email: normalizedEmail,
@@ -41,6 +58,7 @@ router.post("/register", async (req, res) => {
       createdAt: new Date(),
     });
 
+    // авто-логин после регистрации
     req.session.userId = result.insertedId.toString();
 
     return res.status(201).json({
@@ -53,28 +71,27 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// --------------------
 // POST /auth/login
+// --------------------
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // generic error message
-    const invalid = () => res.status(401).json({ message: "Invalid credentials" });
+    if (!email || !password) return invalidCredentials(res);
 
-    if (!email || !password) return invalid();
-
-    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedEmail = normalizeEmail(email);
     const users = getUsersCollection(req);
 
     const user = await users.findOne({ email: normalizedEmail });
-    if (!user) return invalid();
+    if (!user) return invalidCredentials(res);
 
     const ok = await bcrypt.compare(String(password), user.passwordHash);
-    if (!ok) return invalid();
+    if (!ok) return invalidCredentials(res);
 
     req.session.userId = user._id.toString();
 
-    return res.json({
+    return res.status(200).json({
       message: "Logged in",
       user: { id: user._id.toString(), email: user.email },
     });
@@ -84,28 +101,42 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// --------------------
 // POST /auth/logout
+// --------------------
 router.post("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.error("LOGOUT ERROR:", err);
       return res.status(500).json({ message: "Server error" });
     }
-    res.clearCookie("connect.sid");
-    return res.json({ message: "Logged out" });
+
+    // важно: path должен совпадать с cookie path (обычно '/')
+    res.clearCookie("connect.sid", { path: "/" });
+
+    return res.status(200).json({ message: "Logged out" });
   });
 });
 
+// --------------------
 // GET /auth/me
+// --------------------
 router.get("/me", async (req, res) => {
   try {
-    if (!req.session.userId) {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(200).json({ authenticated: false });
+    }
+
+    // защита от кривых id
+    if (!ObjectId.isValid(userId)) {
       return res.status(200).json({ authenticated: false });
     }
 
     const users = getUsersCollection(req);
+
     const user = await users.findOne(
-      { _id: new ObjectId(req.session.userId) },
+      { _id: new ObjectId(userId) },
       { projection: { passwordHash: 0 } }
     );
 
@@ -113,7 +144,7 @@ router.get("/me", async (req, res) => {
       return res.status(200).json({ authenticated: false });
     }
 
-    return res.json({
+    return res.status(200).json({
       authenticated: true,
       user: { id: user._id.toString(), email: user.email },
     });
