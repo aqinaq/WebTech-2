@@ -32,10 +32,9 @@ async function run() {
   const client = new MongoClient(uri);
   await client.connect();
 
-  const db = client.db(); // БД берётся из URI (/cineshelf_db)
+  const db = client.db();
   const col = db.collection("movies");
 
-  // очищаем старые фильмы, чтобы не было дублей
   await col.deleteMany({});
 
   const docs = movies.map(m => ({ ...m, createdAt: new Date() }));

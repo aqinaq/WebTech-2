@@ -5,13 +5,11 @@ const { ObjectId } = require("mongodb");
 const router = express.Router();
 
 function getUsersCollection(req) {
-  // Берём db, который ты обычно сохраняешь в app.locals в connectDB (см. ниже в server.js)
   const db = req.app.locals.db;
   if (!db) throw new Error("DB is not initialized (req.app.locals.db is missing)");
   return db.collection("users");
 }
 
-// POST /auth/register
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -32,7 +30,6 @@ router.post("/register", async (req, res) => {
 
     const exists = await users.findOne({ email: normalizedEmail });
     if (exists) {
-      // можно более нейтрально, но это register (не login), тут ок
       return res.status(409).json({ message: "User already exists" });
     }
 
@@ -44,7 +41,6 @@ router.post("/register", async (req, res) => {
       createdAt: new Date(),
     });
 
-    // опционально: сразу залогинить после регистрации
     req.session.userId = result.insertedId.toString();
 
     return res.status(201).json({
@@ -90,13 +86,11 @@ router.post("/login", async (req, res) => {
 
 // POST /auth/logout
 router.post("/logout", (req, res) => {
-  // уничтожаем сессию
   req.session.destroy((err) => {
     if (err) {
       console.error("LOGOUT ERROR:", err);
       return res.status(500).json({ message: "Server error" });
     }
-    // удаляем cookie сессии
     res.clearCookie("connect.sid");
     return res.json({ message: "Logged out" });
   });
@@ -116,7 +110,6 @@ router.get("/me", async (req, res) => {
     );
 
     if (!user) {
-      // если в сессии старый id — считаем неавторизованным
       return res.status(200).json({ authenticated: false });
     }
 

@@ -23,9 +23,7 @@ function parseNumberStrict(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-// --------------------
-// GET ALL (ОТКРЫТ)
-// --------------------
+
 router.get("/", async (req, res) => {
   try {
     const db = getDb(req, res);
@@ -72,9 +70,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// --------------------
-// GET ONE (ОТКРЫТ)
-// --------------------
+
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: "Invalid ID" });
@@ -93,9 +89,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// --------------------
-// CREATE (ЗАЩИЩЕН)
-// --------------------
 router.post("/", requireAuth, async (req, res) => {
   const { title, genre, year, director, rating, durationMin, country, description } = req.body;
 
@@ -140,9 +133,6 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
-// --------------------
-// UPDATE (ЗАЩИЩЕН)
-// --------------------
 router.put("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   const { title, genre, year, director, rating, durationMin, country, description } = req.body;
@@ -197,9 +187,7 @@ router.put("/:id", requireAuth, async (req, res) => {
   }
 });
 
-// --------------------
-// DELETE (ЗАЩИЩЕН)
-// --------------------
+
 router.delete("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   if (!ObjectId.isValid(id)) return res.status(400).json({ error: "Invalid ID" });
