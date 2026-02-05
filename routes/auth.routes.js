@@ -20,14 +20,13 @@ function invalidCredentials(res) {
 }
 
 // --------------------
-// POST /auth/register
-// Разрешаем только создать ПЕРВОГО пользователя (админа).
-// После этого регистрироваться нельзя (для безопасности).
+// POST /auth/register  ✅ ОТКРЫТАЯ РЕГИСТРАЦИЯ ДЛЯ ВСЕХ
 // --------------------
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // validation
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
@@ -44,12 +43,13 @@ router.post("/register", async (req, res) => {
 
     const users = getUsersCollection(req);
 
-    // ✅ безопасность: разрешаем регистрацию только если в базе нет пользователей
-    const usersCount = await users.countDocuments({});
-    if (usersCount > 0) {
-      return res.status(403).json({ message: "Registration is disabled" });
+    // unique email check
+    const exists = await users.findOne({ email: normalizedEmail });
+    if (exists) {
+      return res.status(409).json({ message: "User already exists" });
     }
 
+    // hash password
     const passwordHash = await bcrypt.hash(pass, 10);
 
     const result = await users.insertOne({
@@ -58,7 +58,7 @@ router.post("/register", async (req, res) => {
       createdAt: new Date(),
     });
 
-    // авто-логин после регистрации
+    // авто-логин после регистрации (удобно)
     req.session.userId = result.insertedId.toString();
 
     return res.status(201).json({
@@ -78,6 +78,7 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // generic error message
     if (!email || !password) return invalidCredentials(res);
 
     const normalizedEmail = normalizeEmail(email);
