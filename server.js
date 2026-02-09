@@ -6,10 +6,14 @@ const connectDB = require("./database/mongo");
 
 // SESSIONS
 const session = require("express-session");
-const MongoStore = require("connect-mongo").default; // ✅ правильно для твоего случая
+const MongoStorePkg = require("connect-mongo");
+const MongoStore = MongoStorePkg.default || MongoStorePkg;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// важно для Render / HTTPS прокси
+app.set("trust proxy", 1);
 
 // --------------------
 // MIDDLEWARE
@@ -24,21 +28,28 @@ app.use((req, res, next) => {
 });
 
 // --------------------
-// SESSIONS (ОБЯЗАТЕЛЬНО ДО РОУТОВ)
+// SESSIONS (ДО РОУТОВ)
 // --------------------
 app.use(
   session({
+    name: "sid",
     secret: process.env.SESSION_SECRET || "fallback_secret",
     resave: false,
     saveUninitialized: false,
+
     store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI, // ✅ новый параметр
+      mongoUrl: process.env.MONGO_URI,
+      dbName: "cineshelf_db",          // ← важно если используешь Atlas
+      collectionName: "sessions",
+      ttl: 60 * 60 * 24,               // 1 день (сек)
+      autoRemove: "native",
     }),
+
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24,     // 1 день (мс)
     },
   })
 );
@@ -83,6 +94,10 @@ app.get("/register", (req, res) =>
   res.sendFile(path.join(__dirname, "views", "register.html"))
 );
 
+// healthcheck
+app.get("/health", (req, res) => {
+  res.status(200).json({ ok: true });
+});
 
 // --------------------
 // API ROUTES
@@ -111,7 +126,7 @@ app.use((req, res) => {
 // --------------------
 async function start() {
   try {
-    const db = await connectDB(); // важно: connectDB должен return db
+    const db = await connectDB();
     app.locals.db = db;
 
     app.listen(PORT, () => {
