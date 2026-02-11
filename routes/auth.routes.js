@@ -15,12 +15,17 @@ function normalizeEmail(email) {
 }
 
 function invalidCredentials(res) {
-  // всегда одно и то же сообщение (по требованиям)
   return res.status(401).json({ message: "Invalid credentials" });
 }
 
+// session store only userId
+function setSessionUser(req, userId) {
+  req.session.userId = String(userId);
+  // role take from DB on demand in loadUserRole middleware, but not stored in session to avoid security issues
+}
+
 // --------------------
-// POST /auth/register  ✅ ОТКРЫТАЯ РЕГИСТРАЦИЯ ДЛЯ ВСЕХ
+// POST /auth/register  
 // --------------------
 router.post("/register", async (req, res) => {
   try {
@@ -55,15 +60,16 @@ router.post("/register", async (req, res) => {
     const result = await users.insertOne({
       email: normalizedEmail,
       passwordHash,
+      role: "user", // save role in DB, but not in session
       createdAt: new Date(),
     });
 
-    // авто-логин после регистрации (удобно)
-    req.session.userId = result.insertedId.toString();
+    // auto-login after registration
+    setSessionUser(req, result.insertedId);
 
     return res.status(201).json({
       message: "Registered",
-      user: { id: result.insertedId.toString(), email: normalizedEmail },
+      user: { id: result.insertedId.toString(), email: normalizedEmail, role: "user" },
     });
   } catch (err) {
     console.error("REGISTER ERROR:", err);
@@ -78,7 +84,6 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // generic error message
     if (!email || !password) return invalidCredentials(res);
 
     const normalizedEmail = normalizeEmail(email);
@@ -90,11 +95,15 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(String(password), user.passwordHash);
     if (!ok) return invalidCredentials(res);
 
-    req.session.userId = user._id.toString();
+    setSessionUser(req, user._id);
 
     return res.status(200).json({
       message: "Logged in",
-      user: { id: user._id.toString(), email: user.email },
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role || "user",
+      },
     });
   } catch (err) {
     console.error("LOGIN ERROR:", err);
@@ -112,8 +121,9 @@ router.post("/logout", (req, res) => {
       return res.status(500).json({ message: "Server error" });
     }
 
-    // важно: path должен совпадать с cookie path (обычно '/')
+    // clear cookies on logout
     res.clearCookie("connect.sid", { path: "/" });
+    res.clearCookie("sid", { path: "/" });
 
     return res.status(200).json({ message: "Logged out" });
   });
@@ -129,7 +139,6 @@ router.get("/me", async (req, res) => {
       return res.status(200).json({ authenticated: false });
     }
 
-    // защита от кривых id
     if (!ObjectId.isValid(userId)) {
       return res.status(200).json({ authenticated: false });
     }
@@ -147,12 +156,20 @@ router.get("/me", async (req, res) => {
 
     return res.status(200).json({
       authenticated: true,
-      user: { id: user._id.toString(), email: user.email },
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role || "user",
+      },
     });
   } catch (err) {
     console.error("ME ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
+
+  console.log("ME session userId:", req.session.userId);
+  console.log("ME user role from DB:", user.role);
+
 });
 
 module.exports = router;

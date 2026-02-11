@@ -41,7 +41,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
-          credentials: "include" // важно: сохранить cookie сессии
+          credentials: "include" 
         });
 
         const data = await res.json().catch(() => ({}));
@@ -51,7 +51,7 @@
           return;
         }
 
-        // успех: редирект на movies
+        
         window.location.href = "/movies";
       } catch (err) {
         msg.textContent = "Network error";

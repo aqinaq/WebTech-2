@@ -1,5 +1,6 @@
 const express = require("express");
 const requireAuth = require("../middleware/requireAuth");
+const requireOwnerOrAdmin = require("../middleware/requireOwnerOrAdmin");
 
 const {
   getMovies,
@@ -15,7 +16,7 @@ router.get("/", getMovies);
 router.get("/:id", getMovieById);
 
 router.post("/", requireAuth, createMovie);
-router.put("/:id", requireAuth, updateMovie);
-router.delete("/:id", requireAuth, deleteMovie);
+router.put("/:id", requireAuth, requireOwnerOrAdmin, updateMovie);
+router.delete("/:id", requireAuth, requireOwnerOrAdmin, deleteMovie);
 
 module.exports = router;

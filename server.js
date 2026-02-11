@@ -9,10 +9,13 @@ const session = require("express-session");
 const MongoStorePkg = require("connect-mongo");
 const MongoStore = MongoStorePkg.default || MongoStorePkg;
 
+//role loader middleware 
+const loadUserRole = require("./middleware/loadUserRole");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// важно для Render / HTTPS прокси
+
 app.set("trust proxy", 1);
 
 // --------------------
@@ -28,7 +31,7 @@ app.use((req, res, next) => {
 });
 
 // --------------------
-// SESSIONS (ДО РОУТОВ)
+// SESSIONS 
 // --------------------
 app.use(
   session({
@@ -39,9 +42,9 @@ app.use(
 
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI,
-      dbName: "cineshelf_db",          // ← важно если используешь Atlas
+      dbName: "cineshelf_db", 
       collectionName: "sessions",
-      ttl: 60 * 60 * 24,               // 1 день (сек)
+      ttl: 60 * 60 * 24, 
       autoRemove: "native",
     }),
 
@@ -49,10 +52,13 @@ app.use(
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24,     // 1 день (мс)
+      maxAge: 1000 * 60 * 60 * 24, 
     },
   })
 );
+
+// load user role for every request (if authenticated) and put it in req.userRole
+app.use(loadUserRole);
 
 // --------------------
 // STATIC FILES
@@ -109,6 +115,8 @@ console.log("Movies routes connected");
 const authRoutes = require("./routes/auth.routes");
 app.use("/auth", authRoutes);
 console.log("Auth routes connected");
+
+
 
 // --------------------
 // GLOBAL 404

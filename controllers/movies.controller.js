@@ -1,7 +1,7 @@
 const { ObjectId } = require("mongodb");
 
 // --------------------
-// Helpers (как у тебя было)
+// Helpers
 // --------------------
 function getDb(req, res) {
   const db = req.app.locals.db;
@@ -20,6 +20,23 @@ function parseIntStrict(v) {
 function parseNumberStrict(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
+}
+
+//taking role from db 
+async function getUserRole(req, db) {
+  if (req.userRole) return req.userRole;
+
+  const userId = req.session?.userId;
+  if (!userId || !ObjectId.isValid(userId)) return "user";
+
+  const user = await db.collection("users").findOne(
+    { _id: new ObjectId(userId) },
+    { projection: { role: 1 } }
+  );
+
+  const role = user?.role || "user";
+  req.userRole = role; 
+  return role;
 }
 
 // --------------------
@@ -61,10 +78,21 @@ async function getMovies(req, res) {
         if (field.startsWith("-")) options.sort[field.substring(1)] = -1;
         else options.sort[field] = 1;
       });
+    } else {
+      options.sort = { createdAt: -1 }; 
     }
 
-    const movies = await collection.find(filter, options).toArray();
-    return res.status(200).json(movies);
+    // Pagination
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      collection.find(filter, options).skip(skip).limit(limit).toArray(),
+      collection.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({ page, limit, total, items });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Database error" });
@@ -112,6 +140,11 @@ async function createMovie(req, res) {
     const db = getDb(req, res);
     if (!db) return;
 
+    const userId = req.session?.userId;
+    if (!userId || !ObjectId.isValid(userId)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const doc = {
       title: String(title).trim(),
       genre: String(genre).trim(),
@@ -121,6 +154,7 @@ async function createMovie(req, res) {
       durationMin: d,
       country: String(country).trim(),
       description: String(description).trim(),
+      ownerId: new ObjectId(userId),
       createdAt: new Date(),
     };
 
@@ -158,8 +192,21 @@ async function updateMovie(req, res) {
     const db = getDb(req, res);
     if (!db) return;
 
+    const userId = req.session?.userId;
+    if (!userId || !ObjectId.isValid(userId)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const role = await getUserRole(req, db);
+    const isAdmin = role === "admin";
+
+    // owner-only  but admin can everything 
+    const filter = isAdmin
+      ? { _id: new ObjectId(id) }
+      : { _id: new ObjectId(id), ownerId: new ObjectId(userId) };
+
     const result = await db.collection("movies").updateOne(
-      { _id: new ObjectId(id) },
+      filter,
       {
         $set: {
           title: String(title).trim(),
@@ -176,7 +223,7 @@ async function updateMovie(req, res) {
     );
 
     if (result.matchedCount === 0) {
-      return res.status(404).json({ error: "Movie not found" });
+      return res.status(403).json({ error: "Forbidden (not owner)" });
     }
 
     return res.status(200).json({ message: "Movie updated" });
@@ -194,10 +241,22 @@ async function deleteMovie(req, res) {
     const db = getDb(req, res);
     if (!db) return;
 
-    const result = await db.collection("movies").deleteOne({ _id: new ObjectId(id) });
+    const userId = req.session?.userId;
+    if (!userId || !ObjectId.isValid(userId)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const role = await getUserRole(req, db);
+    const isAdmin = role === "admin";
+
+    const filter = isAdmin
+      ? { _id: new ObjectId(id) }
+      : { _id: new ObjectId(id), ownerId: new ObjectId(userId) };
+
+    const result = await db.collection("movies").deleteOne(filter);
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({ error: "Movie not found" });
+      return res.status(403).json({ error: "Forbidden (not owner)" });
     }
 
     return res.status(200).json({ message: "Movie deleted" });

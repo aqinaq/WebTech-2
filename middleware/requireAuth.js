@@ -1,10 +1,10 @@
 function requireAuth(req, res, next) {
-  // если пользователь залогинен
+  // if user is logged in session should have userId
   if (req.session && req.session.userId) {
     return next();
   }
 
-  // если НЕ залогинен
+  // if it doesn't — 401 Unauthorized
   return res.status(401).json({
     message: "Unauthorized",
   });

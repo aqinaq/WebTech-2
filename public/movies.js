@@ -26,6 +26,11 @@ const authWarning = document.getElementById("authWarning");
 
 let isAuthenticated = false;
 
+let currentPage = 1;
+let totalPages = 1;
+const limit = 5; // сколько фильмов на странице
+
+
 // --------------------
 // Helpers
 // --------------------
@@ -82,18 +87,35 @@ async function checkAuth() {
 // Movies loading
 // --------------------
 async function loadMovies() {
-  const res = await fetch(API_URL);
-  const movies = await safeJson(res);
+  // ✅ важно: отправляем cookie сессии (иначе на Render может не видеть логин)
+  const res = await fetch(`${API_URL}?page=${currentPage}&limit=${limit}`, {credentials: "include"});
+  const data = await safeJson(res);
+
+  // ✅ поддержка обоих форматов:
+  // 1) массив (старый формат)
+  // 2) объект пагинации { page, limit, total, items }
+  const movies = Array.isArray(data) ? data : (data?.items || []);
+
+  if (data?.total) {
+  totalPages = Math.ceil(data.total / limit);
+}
+updatePaginationUI();
+
 
   tableBody.innerHTML = "";
 
   if (!res.ok) {
-    const msg = movies?.error || movies?.message || "Failed to load movies";
+    const msg = data?.error || data?.message || "Failed to load movies";
     tableBody.innerHTML = `<tr><td colspan="9" style="padding:10px;">${escapeHtml(msg)}</td></tr>`;
     return;
   }
 
-  (movies || []).forEach((m) => {
+  if (movies.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="9" style="padding:10px; color:#aaa;">No movies found</td></tr>`;
+    return;
+  }
+
+  movies.forEach((m) => {
     const tr = document.createElement("tr");
 
     const actionsHtml = isAuthenticated
@@ -123,6 +145,7 @@ async function loadMovies() {
     tableBody.appendChild(tr);
   });
 }
+
 
 // --------------------
 // Form modes
@@ -185,7 +208,7 @@ tableBody.addEventListener("click", async (e) => {
   if (editId) {
     if (!isAuthenticated) return redirectToLogin();
 
-    const res = await fetch(`${API_URL}/${editId}`);
+    const res = await fetch(`${API_URL}/${editId}`, { credentials: "include" });
     const movie = await safeJson(res);
 
     if (!res.ok) {
@@ -285,6 +308,33 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
+function updatePaginationUI() {
+  const pageInfo = document.getElementById("pageInfo");
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage");
+
+  if (!pageInfo) return;
+
+  pageInfo.textContent = `Page ${currentPage} / ${totalPages}`;
+
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+}
+
+document.getElementById("prevPage")?.addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    loadMovies();
+  }
+});
+
+document.getElementById("nextPage")?.addEventListener("click", () => {
+  if (currentPage < totalPages) {
+    currentPage++;
+    loadMovies();
+  }
+});
+ 
 // --------------------
 // Init
 // --------------------
