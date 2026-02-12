@@ -11,8 +11,7 @@ async function connectDB() {
   client = new MongoClient(process.env.MONGO_URI);
   await client.connect();
 
-  // имя базы уже в URI: ...mongodb.net/cineshelf_db...
-  db = client.db(); // возьмёт DB из URI
+  db = client.db();
   console.log("Connected to MongoDB");
 
   return db;

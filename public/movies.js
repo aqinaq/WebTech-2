@@ -8,7 +8,6 @@ const titleInput = document.getElementById("title");
 const genreInput = document.getElementById("genre");
 const yearInput = document.getElementById("year");
 
-// NEW fields (должны быть в movies.html)
 const directorInput = document.getElementById("director");
 const ratingInput = document.getElementById("rating");
 const durationInput = document.getElementById("durationMin");
@@ -18,7 +17,6 @@ const descInput = document.getElementById("description");
 const submitBtn = document.getElementById("submitBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 
-// Auth UI elements
 const authStatus = document.getElementById("authStatus");
 const loginLink = document.getElementById("loginLink");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -31,9 +29,6 @@ let totalPages = 1;
 const limit = 5; // сколько фильмов на странице
 
 
-// --------------------
-// Helpers
-// --------------------
 async function safeJson(res) {
   try {
     return await res.json();
@@ -83,17 +78,11 @@ async function checkAuth() {
   return false;
 }
 
-// --------------------
-// Movies loading
-// --------------------
+
 async function loadMovies() {
-  // ✅ важно: отправляем cookie сессии (иначе на Render может не видеть логин)
   const res = await fetch(`${API_URL}?page=${currentPage}&limit=${limit}`, {credentials: "include"});
   const data = await safeJson(res);
 
-  // ✅ поддержка обоих форматов:
-  // 1) массив (старый формат)
-  // 2) объект пагинации { page, limit, total, items }
   const movies = Array.isArray(data) ? data : (data?.items || []);
 
   if (data?.total) {
@@ -147,9 +136,6 @@ updatePaginationUI();
 }
 
 
-// --------------------
-// Form modes
-// --------------------
 function setFormModeCreate() {
   idInput.value = "";
   submitBtn.textContent = "Add Movie";
@@ -175,9 +161,6 @@ function setFormModeEdit(movie) {
   cancelBtn.style.display = "inline-block";
 }
 
-// --------------------
-// Table actions
-// --------------------
 tableBody.addEventListener("click", async (e) => {
   const editId = e.target.dataset?.edit;
   const delId = e.target.dataset?.del;
@@ -220,9 +203,7 @@ tableBody.addEventListener("click", async (e) => {
   }
 });
 
-// --------------------
-// Submit form
-// --------------------
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!isAuthenticated) return redirectToLogin();
@@ -275,9 +256,7 @@ cancelBtn.addEventListener("click", () => {
   setFormModeCreate();
 });
 
-// --------------------
-// Logout
-// --------------------
+
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
     const res = await fetch("/auth/logout", {
@@ -296,9 +275,7 @@ if (logoutBtn) {
   });
 }
 
-// --------------------
-// Escape HTML
-// --------------------
+
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -335,9 +312,7 @@ document.getElementById("nextPage")?.addEventListener("click", () => {
   }
 });
  
-// --------------------
-// Init
-// --------------------
+
 (async () => {
   await checkAuth();
   await loadMovies();
